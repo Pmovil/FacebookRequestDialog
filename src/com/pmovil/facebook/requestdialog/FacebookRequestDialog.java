@@ -47,12 +47,12 @@ public class FacebookRequestDialog {
             if ( peer == null ) {
                 throw new RuntimeException("FacebookRequestDialog is not implemented yet in this platform.");
             }
-            if ( !peer.isSupported() ){
-                throw new RuntimeException("FacebookRequestDialog is not supported in this platform.");
-            }
-            if ( !FacebookConnect.getInstance().isFacebookSDKSupported() ){
-                throw new RuntimeException("FacebookRequestDialog is not supported in this platform.");
-            }
+        }
+        if ( !peer.isSupported() ){
+            throw new RuntimeException("FacebookRequestDialog is not supported in this platform.");
+        }
+        if ( !FacebookConnect.getInstance().isFacebookSDKSupported() ){
+            throw new RuntimeException("FacebookRequestDialog is not supported in this platform.");
         }
         contextValue = context;
         FacebookRequestDialog dialog = new FacebookRequestDialog(text);
