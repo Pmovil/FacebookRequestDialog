@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2014 Pmovil LTDA.
+ * Copyright 2014-2015 Pmovil LTDA.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,11 @@
  */
 
 #import <Foundation/Foundation.h>
+#import "FBSDKGameRequestDialog.h"
 
-@interface com_pmovil_facebook_requestdialog_NativeFacebookRequestDialogImpl : NSObject {
+@interface com_pmovil_facebook_requestdialog_NativeFacebookRequestDialogImpl : NSObject
+<FBSDKGameRequestDialogDelegate>
+{
 }
 
 -(BOOL)isShown;

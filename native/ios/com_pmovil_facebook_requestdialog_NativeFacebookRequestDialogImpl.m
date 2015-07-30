@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2014 Pmovil LTDA.
+ * Copyright 2014-2015 Pmovil LTDA.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
  */
 
 #import "com_pmovil_facebook_requestdialog_NativeFacebookRequestDialogImpl.h"
-//#import <FacebookSDK/FacebookSDK.h>
-#import "FacebookSDK.h"
+#import "FBSDKGameRequestDialog.h"
+#import "FBSDKGameRequestContent.h"
 
 @implementation com_pmovil_facebook_requestdialog_NativeFacebookRequestDialogImpl
 
@@ -33,52 +33,34 @@
     return YES;
 }
 
-- (NSDictionary*)parseURLParams:(NSString *)query {
-    NSArray *pairs = [query componentsSeparatedByString:@"&"];
-    NSMutableDictionary *params = [[NSMutableDictionary alloc] init];
-    for (NSString *pair in pairs) {
-        NSArray *kv = [pair componentsSeparatedByString:@"="];
-        NSString *val =
-        [kv[1] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-        params[kv[0]] = val;
-    }
-    return params;
-}
-
 -(void)show:(NSString*)param{
+
     dispatch_sync(dispatch_get_main_queue(), ^{
-    [FBWebDialogs
-         presentRequestsDialogModallyWithSession:nil
-         message:param
-         title:nil
-         parameters:nil
-         handler:^(FBWebDialogResult result, NSURL *resultURL, NSError *error) {
-             if (error) {
-                 // Error launching the dialog or sending the request.
-                 NSLog(@"Error sending request.");
-             } else {
-                 if (result == FBWebDialogResultDialogNotCompleted) {
-                     // User clicked the "x" icon
-                     NSLog(@"User canceled request.");
-                 } else {
-                     // Handle the send request callback
-                     NSDictionary *urlParams = [self parseURLParams:[resultURL query]];
-                     if (![urlParams valueForKey:@"request"]) {
-                         // User clicked the Cancel button
-                         NSLog(@"User canceled request.");
-                     } else {
-                         // User clicked the Send button
-                         NSString *requestID = [urlParams valueForKey:@"request"];
-                         NSLog(@"Request ID: %@", requestID);
-                     }
-                 }
-             }
-        }];
+        FBSDKGameRequestContent *gameRequestContent = [[FBSDKGameRequestContent alloc] init];
+        gameRequestContent.message = param;
+        //gameRequestContent.title = @"OPTIONAL TITLE";
+        [FBSDKGameRequestDialog showWithContent:gameRequestContent delegate:self];
     });
+
 }
 
 -(BOOL)isSupported{
     return YES;
+}
+
+
+-(void) gameRequestDialog : (FBSDKGameRequestDialog *) gameRequestDialog
+didCompleteWithResults : (NSDictionary *) results {
+    NSLog(@"Request sent.");
+}
+
+-(void) gameRequestDialogDidCancel : (FBSDKGameRequestDialog *) gameRequestDialog {
+    NSLog(@"Request cancelled.");
+}
+
+-(void) gameRequestDialog : (FBSDKGameRequestDialog *) gameRequestDialog
+didFailWithError : (NSError *) error {
+    NSLog(@"Error: %@", error);
 }
 
 @end

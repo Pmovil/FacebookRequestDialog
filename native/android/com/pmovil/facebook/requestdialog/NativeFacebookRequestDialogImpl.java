@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2014 Pmovil LTDA.
+ * Copyright 2015 Pmovil LTDA.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,65 +24,62 @@
 package com.pmovil.facebook.requestdialog;
 
 import android.app.Activity;
-import android.os.Bundle;
-import android.widget.Toast;
+import android.content.Intent;
+import android.util.Log;
+import com.codename1.impl.android.CodenameOneActivity;
+import com.codename1.impl.android.IntentResultListener;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
-import com.facebook.FacebookOperationCanceledException;
-import com.facebook.Session;
-import com.facebook.widget.WebDialog;
-import com.facebook.widget.WebDialog.OnCompleteListener;
+import com.facebook.FacebookSdk;
+import com.facebook.share.model.GameRequestContent;
+import com.facebook.share.widget.GameRequestDialog;
 
 public class NativeFacebookRequestDialogImpl {
 
-    private WebDialog requestsDialog = null;
+    private static final String TAG = "FACEBOOK_REQUEST_DIALOG";
+    private static CodenameOneActivity app;
+    GameRequestDialog requestsDialog;
+    CallbackManager callbackManager;
+    boolean first = true;
 
     public boolean isShown() {
-        if (requestsDialog == null) {
-            return false;
-        }
-        return requestsDialog.isShowing();
+        return true; // not supported anymore
     }
 
-    public void show(String message) {
-        final Bundle params = new Bundle();
-        params.putString("message", message);
-        final Activity app = (Activity) FacebookRequestDialog.getContext();
+    public void show(final String message) {
+        app = (CodenameOneActivity) FacebookRequestDialog.getContext();
 
         app.runOnUiThread(new Runnable() {
             public void run() {
-                requestsDialog = (new WebDialog.RequestsDialogBuilder(app,
-                        Session.getActiveSession(),
-                        params))
-                        .setOnCompleteListener(new OnCompleteListener() {
-                            @Override
-                            public void onComplete(Bundle values,
-                                    FacebookException error) {
-                                if (error != null) {
-                                    if (error instanceof FacebookOperationCanceledException) {
-                                        Toast.makeText(app.getApplicationContext(),
-                                                "Request cancelled",
-                                                Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(app.getApplicationContext(),
-                                                "Network Error",
-                                                Toast.LENGTH_SHORT).show();
-                                    }
-                                } else {
-                                    final String requestId = values.getString("request");
-                                    if (requestId != null) {
-                                        Toast.makeText(app.getApplicationContext(),
-                                                "Request sent",
-                                                Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(app.getApplicationContext(),
-                                                "Request cancelled",
-                                                Toast.LENGTH_SHORT).show();
-                                    }
-                                }
-                            }
-                        })
-                        .build();
-                requestsDialog.show();
+                if (first) {
+                    first = false;
+                    FacebookSdk.sdkInitialize(app.getApplicationContext());
+                    callbackManager = CallbackManager.Factory.create();
+                    app.setIntentResultListener(new IntentResultListener() {
+                        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+                            callbackManager.onActivityResult(requestCode, resultCode, data);  
+                        }
+                    });
+                }
+                requestsDialog = new GameRequestDialog(app);
+                requestsDialog.registerCallback(callbackManager, new FacebookCallback<GameRequestDialog.Result>() {
+                    public void onSuccess(GameRequestDialog.Result result) {
+                        Log.i(TAG, "Request sent - " + result.getRequestId());
+                    }
+
+                    public void onCancel() {
+                        Log.i(TAG, "Request cancelled");
+                    }
+
+                    public void onError(FacebookException error) {
+                        Log.w(TAG, "Network Error");
+                    }
+                });
+                GameRequestContent content = new GameRequestContent.Builder()
+                .setMessage(message)
+                .build();
+                requestsDialog.show(content);
             }
         });
 
